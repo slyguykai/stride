@@ -14,6 +14,17 @@ struct SettingsView: View {
                     CalendarIntegrationView()
                 }
             }
+            
+            Section("Learning") {
+                NavigationLink("Learned Context") {
+                    ContextLearningView()
+                }
+            }
+            
+            Section("About") {
+                LabeledContent("Version", value: "1.0.0")
+                LabeledContent("Build", value: "1")
+            }
         }
         .navigationTitle("Settings")
     }

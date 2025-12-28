@@ -164,7 +164,7 @@ struct FocusTimeView: View {
             Button {
                 viewModel.commitToSlot()
                 AudioManager.shared.play(.focusStart)
-                HapticEngine.shared.success()
+                HapticEngine.shared.focusTimeStart()
                 dismiss()
             } label: {
                 Text("Commit to selected time")

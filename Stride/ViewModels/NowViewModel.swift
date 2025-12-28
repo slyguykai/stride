@@ -11,6 +11,10 @@ final class NowViewModel {
     private let notificationScheduler: NotificationSchedulerProtocol
     private let streakTracker = StreakTracker()
     private let aspirationalSurfacing = AspirationalSurfacingService()
+    private let contextEngine = ContextEngine()
+    
+    // Track task start times for completion duration
+    private var taskStartTimes: [UUID: Date] = [:]
 
     private(set) var tasks: [Task] = []
     private(set) var isLoading = false
@@ -57,13 +61,26 @@ final class NowViewModel {
     func complete(_ task: Task) async {
         task.status = .completed
         task.completedAt = Date()
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        let count = updateCascade(for: task)
+        cascadeCount = count
+        
+        // Haptic feedback - cascade effect if tasks were unblocked
+        if count > 0 {
+            HapticEngine.shared.cascadeEffect(count: count)
+        } else {
+            HapticEngine.shared.taskComplete()
+        }
+        
         AudioManager.shared.play(.completeMajor)
         lastCompletionTitle = task.title
-        cascadeCount = updateCascade(for: task)
         streakData = streakTracker.recordCompletion(on: task.completedAt ?? Date())
         try? modelContext.save()
+        
+        // Record completion for learning
+        let timeToComplete = taskStartTimes[task.id].map { Date().timeIntervalSince($0) }
+        await contextEngine.recordCompletion(for: task, timeToComplete: timeToComplete)
+        taskStartTimes.removeValue(forKey: task.id)
+        
         loadTasks()
     }
 
@@ -88,17 +105,30 @@ final class NowViewModel {
                 preferences: preferences
             )
         }
+        
+        // Record defer for learning
+        await contextEngine.recordDefer(for: task, reason: reason)
+        
         showDeferSheet = false
         taskToDefer = nil
         loadTasks()
     }
 
     private func rankTasks(_ tasks: [Task]) -> [Task] {
-        tasks
+        let ranked = tasks
             .map { ($0, calculateDoabilityScore(task: $0)) }
             .sorted { $0.1 > $1.1 }
             .prefix(5)
             .map { $0.0 }
+        
+        // Track when tasks are surfaced for duration measurement
+        for task in ranked {
+            if taskStartTimes[task.id] == nil {
+                taskStartTimes[task.id] = Date()
+            }
+        }
+        
+        return ranked
     }
 
     func cardSize(for task: Task) -> TaskCardSize {

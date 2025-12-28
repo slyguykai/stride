@@ -9,11 +9,7 @@ struct WaitingView: View {
     var body: some View {
         Group {
             if let viewModel, viewModel.waitingTasks.isEmpty {
-                ContentUnavailableView(
-                    "No waiting tasks",
-                    systemImage: "hourglass",
-                    description: Text("Mark a task as waiting to track follow-ups.")
-                )
+                WaitingEmptyStateView()
             } else {
                 List {
                     ForEach(viewModel?.waitingTasks ?? []) { task in

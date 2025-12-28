@@ -46,7 +46,8 @@ struct DeferSheet: View {
 
             ForEach(DeferReason.allCases, id: \.self) { reason in
                 Button {
-                    withAnimation { selectedReason = reason }
+                    HapticEngine.shared.selectionChanged()
+                    withAnimation(.strideQuick) { selectedReason = reason }
                 } label: {
                     HStack {
                         Text(reason.emoji)
@@ -99,6 +100,7 @@ struct DeferSheet: View {
 
     private var confirmButton: some View {
         Button {
+            HapticEngine.shared.mediumTap()
             _Concurrency.Task {
                 await onDefer(selectedReason!, selectedTime)
                 dismiss()
@@ -131,6 +133,7 @@ struct TimeOptionButton: View {
 
     var body: some View {
         Button {
+            HapticEngine.shared.lightTap()
             onSelect(time)
         } label: {
             Text(title)

@@ -71,11 +71,9 @@ struct NowView: View {
     @ViewBuilder
     private var contentView: some View {
         if let viewModel, viewModel.tasks.isEmpty {
-            ContentUnavailableView(
-                "No tasks yet",
-                systemImage: "checkmark.circle",
-                description: Text("Capture your first thought to get started.")
-            )
+            NowEmptyStateView {
+                showCapture = true
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             taskListView
@@ -92,7 +90,7 @@ struct NowView: View {
             }
             .padding()
         }
-        .animation(.spring(), value: viewModel?.tasks.count ?? 0)
+        .animation(.strideSpring, value: viewModel?.tasks.count ?? 0)
     }
 
     @ViewBuilder

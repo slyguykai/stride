@@ -14,7 +14,7 @@ struct CompletionCelebrationView: View {
                     .foregroundStyle(.green)
                     .scaleEffect(isAnimating ? 1.0 : 0.6)
                     .opacity(isAnimating ? 1 : 0)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isAnimating)
+                    .animation(Animation.strideSpringBouncy, value: isAnimating)
             }
 
             Text("Nice!")

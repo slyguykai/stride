@@ -60,12 +60,8 @@ struct CaptureView: View {
     }
 
     private var processingView: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text("Understanding your thought...")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        ThinkingIndicatorView()
+            .transition(.scale.combined(with: .opacity))
     }
 
     private var inputArea: some View {

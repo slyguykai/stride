@@ -45,11 +45,11 @@
 | Haptics | Core Haptics |
 
 ### 0.4 Deliverables
-- [ ] Xcode project initialized with folder structure
-- [ ] SPM configured with initial dependencies
-- [ ] Git repo with .gitignore and branch protection
+- [x] Xcode project initialized with folder structure
+- [x] SPM configured with initial dependencies
+- [x] Git repo with .gitignore and branch protection
 - [ ] CI/CD pipeline running
-- [ ] Architecture decision records (ADRs) documented
+- [x] Architecture decision records (ADRs) documented
 
 ---
 
@@ -122,11 +122,11 @@ UserPattern {
 - Offline-first architecture
 
 ### 1.4 Deliverables
-- [ ] All SwiftData models implemented
-- [ ] Dependency graph engine with unit tests
-- [ ] CRUD operations for all entities
-- [ ] Migration strategy documented
-- [ ] Sample data seeding for development
+- [x] All SwiftData models implemented
+- [x] Dependency graph engine with unit tests
+- [x] CRUD operations for all entities
+- [x] Migration strategy documented
+- [x] Sample data seeding for development
 
 ---
 
@@ -172,12 +172,12 @@ Return as JSON.
 - Store AI outputs for pattern learning
 
 ### 2.4 Deliverables
-- [ ] Capture screen UI implemented
-- [ ] Text input with raw storage
-- [ ] Voice transcription working
-- [ ] AI service integrated
-- [ ] Edit/accept flow for AI suggestions
-- [ ] Share extension configured
+- [x] Capture screen UI implemented
+- [x] Text input with raw storage
+- [x] Voice transcription working
+- [x] AI service integrated
+- [x] Edit/accept flow for AI suggestions
+- [x] Share extension configured
 
 ---
 
@@ -259,12 +259,12 @@ func getNowTasks() -> [Task] {
 - Smooth reordering when list changes
 
 ### 3.5 Deliverables
-- [ ] TaskCard component with all variants
-- [ ] "Now" view with algorithm
-- [ ] Swipe gestures implemented
-- [ ] Full task breakdown view
-- [ ] Basic animations working
-- [ ] Haptic feedback integrated
+- [x] TaskCard component with all variants
+- [x] "Now" view with algorithm
+- [x] Swipe gestures implemented
+- [x] Full task breakdown view
+- [x] Basic animations working
+- [x] Haptic feedback integrated
 
 ---
 
@@ -323,12 +323,12 @@ func analyzePatterns(for tasks: [Task]) -> [PatternInsight] {
 5. User can: Commit to time slot, break down further, or mark as "not doing"
 
 ### 4.4 Deliverables
-- [ ] Defer flow with reason picker
-- [ ] DeferEvent persistence and tracking
-- [ ] Pattern detection algorithms
-- [ ] Focus Time modal UI
-- [ ] AI micro-breakdown integration
-- [ ] Downstream impact visualization
+- [x] Defer flow with reason picker
+- [x] DeferEvent persistence and tracking
+- [x] Pattern detection algorithms
+- [x] Focus Time modal UI
+- [x] AI micro-breakdown integration
+- [x] Downstream impact visualization
 
 ---
 
@@ -377,12 +377,12 @@ struct RecurringRule {
 - Rollover handling (missed vs completed)
 
 ### 5.4 Deliverables
-- [ ] EventKit integration with permission handling
-- [ ] Free/busy analysis
-- [ ] Notification scheduling system
-- [ ] Recurring task model and UI
-- [ ] Window visualization
-- [ ] Notification preferences screen
+- [x] EventKit integration with permission handling
+- [x] Free/busy analysis
+- [x] Notification scheduling system
+- [x] Recurring task model and UI
+- [x] Window visualization
+- [x] Notification preferences screen
 
 ---
 
@@ -580,13 +580,13 @@ func detectScopeCreep(original: Task, edited: Task) -> ScopeCreepResult? {
 ### 8.3 Animation Polish
 
 **Audit Checklist:**
-- [ ] All view transitions at 60fps
-- [ ] No animation jank on older devices
-- [ ] Consistent spring parameters across app
-- [ ] Loading states have skeleton/shimmer
-- [ ] Empty states have subtle motion
-- [ ] Card reordering is smooth
-- [ ] Keyboard appearance/dismissal is smooth
+- [x] All view transitions at 60fps
+- [x] No animation jank on older devices
+- [x] Consistent spring parameters across app
+- [x] Loading states have skeleton/shimmer
+- [x] Empty states have subtle motion
+- [x] Card reordering is smooth
+- [x] Keyboard appearance/dismissal is smooth
 
 **Micro-Animations:**
 - Typing indicators in capture
@@ -596,12 +596,12 @@ func detectScopeCreep(original: Task, edited: Task) -> ScopeCreepResult? {
 - Icon state transitions
 
 ### 8.4 Deliverables
-- [ ] Scope creep detection system
-- [ ] Expansion warning UI
-- [ ] Split task flow
-- [ ] Haptic feedback audit complete
-- [ ] Animation performance audit
-- [ ] 60fps verification on target devices
+- [x] Scope creep detection system
+- [x] Expansion warning UI
+- [x] Split task flow
+- [x] Haptic feedback audit complete
+- [x] Animation performance audit
+- [x] 60fps verification on target devices
 
 ---
 
@@ -673,12 +673,12 @@ actor ContextEngine {
 - User can view and edit learned context
 
 ### 9.4 Deliverables
-- [ ] Behavior feature collection
-- [ ] Create ML model definition
-- [ ] On-device training pipeline
-- [ ] Context engine implementation
-- [ ] Personal context storage
-- [ ] Context learning UI (view/edit)
+- [x] Behavior feature collection
+- [x] Create ML model definition
+- [x] On-device training pipeline
+- [x] Context engine implementation
+- [x] Personal context storage
+- [x] Context learning UI (view/edit)
 - [ ] A/B testing framework
 
 ---

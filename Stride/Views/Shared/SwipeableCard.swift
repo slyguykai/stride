@@ -40,7 +40,7 @@ struct SwipeableCard<Content: View>: View {
                 .offset(x: offset)
                 .gesture(dragGesture)
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: offset)
+        .animation(Animation.strideSpringResponsive, value: offset)
     }
 
     private var dragGesture: some Gesture {
@@ -49,6 +49,7 @@ struct SwipeableCard<Content: View>: View {
                 offset = value.translation.width
                 let passed = abs(value.translation.width) > threshold
                 if passed, !didTriggerHaptic {
+                    // Light tap when crossing threshold
                     HapticEngine.shared.lightTap()
                     didTriggerHaptic = true
                 } else if !passed {
@@ -57,14 +58,17 @@ struct SwipeableCard<Content: View>: View {
             }
             .onEnded { value in
                 if value.translation.width > threshold {
+                    // Complete - success pattern is handled in viewModel.complete()
                     offset = UIScreen.main.bounds.width
-                    HapticEngine.shared.taskComplete()
                     _Concurrency.Task { await onSwipeRight() }
                 } else if value.translation.width < -threshold {
+                    // Defer - medium tap
                     HapticEngine.shared.mediumTap()
                     onSwipeLeft()
                     offset = 0
                 } else {
+                    // Cancelled swipe - soft snap back
+                    HapticEngine.shared.softTap()
                     offset = 0
                 }
                 didTriggerHaptic = false

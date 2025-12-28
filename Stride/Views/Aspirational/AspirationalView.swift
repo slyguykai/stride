@@ -9,37 +9,35 @@ struct AspirationalView: View {
     @State private var onboardingTask: Task?
 
     var body: some View {
-        List {
+        Group {
             if tasks.isEmpty {
-                ContentUnavailableView(
-                    "No aspirational tasks",
-                    systemImage: "sparkles",
-                    description: Text("Add something you want to explore, not chase.")
-                )
+                AspirationalEmptyStateView()
             } else {
-                ForEach(tasks) { task in
-                    VStack(alignment: .leading, spacing: 8) {
-                        TaskCard(task: task, size: .small) {
-                            selectedTask = task
-                        }
-                        if task.aspirationOnboardingComplete ?? false == false {
-                            Button("Answer a few prompts") {
-                                onboardingTask = task
+                List {
+                    ForEach(tasks) { task in
+                        VStack(alignment: .leading, spacing: 8) {
+                            TaskCard(task: task, size: .small) {
+                                selectedTask = task
                             }
-                            .font(.subheadline)
+                            if task.aspirationOnboardingComplete ?? false == false {
+                                Button("Answer a few prompts") {
+                                    onboardingTask = task
+                                }
+                                .font(.subheadline)
+                            }
+                            if let why = task.aspirationWhy, !why.isEmpty {
+                                Text("Why: \(why)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let when = task.aspirationWhen, !when.isEmpty {
+                                Text("When: \(when)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                        if let why = task.aspirationWhy, !why.isEmpty {
-                            Text("Why: \(why)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        if let when = task.aspirationWhen, !when.isEmpty {
-                            Text("When: \(when)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
             }
         }

@@ -8,6 +8,8 @@ struct TaskDetailView: View {
     @State private var viewModel: TaskDetailViewModel?
     @State private var showRecurringEditor = false
     @State private var showWaitingConfig = false
+    @State private var showAddSubtask = false
+    @State private var newSubtaskTitle = ""
 
     init(task: Task) {
         self.task = task
@@ -16,6 +18,18 @@ struct TaskDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // Scope creep banner
+                if let result = viewModel?.scopeCreepResult, result.isSignificant,
+                   let snapshot = viewModel?.snapshot {
+                    ScopeCreepBanner(
+                        result: result,
+                        onKeep: { viewModel?.acceptScopeCreep() },
+                        onSplit: { viewModel?.initiateSplit() },
+                        onRevert: { viewModel?.revertScopeCreep() }
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                
                 header
                 originalThought
                 subtasksSection
@@ -24,6 +38,7 @@ struct TaskDetailView: View {
                 metadataSection
             }
             .padding()
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel?.scopeCreepResult?.isSignificant)
         }
         .navigationTitle("Task")
         .navigationBarTitleDisplayMode(.inline)
@@ -37,6 +52,7 @@ struct TaskDetailView: View {
                         showWaitingConfig = true
                     }
                     Button("Recurring Rule") { showRecurringEditor = true }
+                    Button("Add Step") { showAddSubtask = true }
                     Button("Delete", role: .destructive) {
                         viewModel?.delete()
                         dismiss()
@@ -52,6 +68,34 @@ struct TaskDetailView: View {
         .sheet(isPresented: $showWaitingConfig) {
             WaitingConfigView(task: task)
         }
+        .sheet(isPresented: splitSheetBinding) {
+            if let viewModel, let snapshot = viewModel.snapshot, let result = viewModel.scopeCreepResult {
+                SplitTaskSheet(
+                    task: task,
+                    snapshot: snapshot,
+                    scopeCreepResult: result
+                )
+            }
+        }
+        .alert("Add Step", isPresented: $showAddSubtask) {
+            TextField("Step title", text: $newSubtaskTitle)
+            Button("Add") {
+                if !newSubtaskTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    viewModel?.addSubtask(title: newSubtaskTitle)
+                    newSubtaskTitle = ""
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                newSubtaskTitle = ""
+            }
+        }
+    }
+    
+    private var splitSheetBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.showSplitSheet ?? false },
+            set: { viewModel?.showSplitSheet = $0 }
+        )
     }
 
     private var header: some View {
