@@ -20,3 +20,4 @@ Stride uses SwiftData with lightweight migrations as the default approach. The s
 ## Schema Change Log
 
 - 2025-02-14: Initial schema for Task, Subtask, TaskDependency, DeferEvent, UserPattern.
+- 2025-02-14: Added `Task.deadline` and optional `Task.contextTags` for Phase 2/3 parsing and display.

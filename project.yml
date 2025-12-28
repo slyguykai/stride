@@ -9,6 +9,7 @@ settings:
     INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
     PRODUCT_BUNDLE_IDENTIFIER: com.stride.stride
+    INFOPLIST_KEY_OPENAI_API_KEY: $(OPENAI_API_KEY)
 
 targets:
   Stride:
@@ -22,10 +23,22 @@ targets:
       base:
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 0.1.0
+    configFiles:
+      Debug: Secrets.xcconfig
+      Release: Secrets.xcconfig
   StrideTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - path: StrideTests
+    dependencies:
+      - target: Stride
+  StrideShareExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+    info:
+      path: ShareExtension/Info.plist
     dependencies:
       - target: Stride
