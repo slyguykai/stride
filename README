@@ -1,1 +1,16 @@
-Initial commit
+# Stride
+
+Stride is a task management app. This repository will evolve alongside the product vision.
+
+## Overview
+This README is intentionally lightweight. It will be updated as architecture, features, and workflows are defined.
+
+## Getting started
+1. Clone the repository.
+2. Follow setup instructions for the components added to this codebase (to be documented).
+
+## Contributing
+Contributions are welcome. Please open an issue to discuss changes before submitting a pull request.
+
+## License
+License information will be added when available.
