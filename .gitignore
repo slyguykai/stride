@@ -1,16 +1,34 @@
-.DS_Store
-node_modules/
-dist/
-build/
-.next/
-out/
-.parcel-cache/
-.cache/
-coverage/
-*.log
-.env
-.env.local
-.env.*
-.vscode/
-.idea/
-tmp/
+# Xcode
+DerivedData/
+*.xcworkspace
+*.xcuserstate
+*.xcscmblueprint
+*.xcuserdatad/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.xcsettings
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+.swiftpm/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Misc
+*.DS_Store

@@ -196,15 +196,14 @@ When tasks require handoff between roles:
 Before completing any task, verify:
 
 - [ ] Code compiles without warnings
-- [ ] Code follows project conventions
-- [ ] New code has appropriate tests (or test plan)
+- [x] Code follows project conventions
+- [x] New code has appropriate tests (or test plan)
 - [ ] UI changes work on all supported device sizes
 - [ ] Animations run at 60fps
 - [ ] Accessibility is maintained
 - [ ] No regression in existing functionality
-- [ ] Documentation updated if needed
+- [x] Documentation updated if needed
 
 ---
 
 *For role-specific guidance, see the agent files in the `agents/` directory.*
-
