@@ -3,9 +3,34 @@ import SwiftUI
 final class AppCoordinator {
     @ViewBuilder
     func rootView() -> some View {
-        NavigationStack {
-            NowView()
-                .navigationTitle("Stride")
+        TabView {
+            NavigationStack {
+                NowView()
+            }
+            .tabItem {
+                Label("Now", systemImage: "bolt.fill")
+            }
+
+            NavigationStack {
+                WaitingView()
+            }
+            .tabItem {
+                Label("Waiting", systemImage: "hourglass")
+            }
+
+            NavigationStack {
+                AspirationalView()
+            }
+            .tabItem {
+                Label("Aspirational", systemImage: "sparkles")
+            }
+
+            NavigationStack {
+                WeeklyRetrospectiveView()
+            }
+            .tabItem {
+                Label("Review", systemImage: "chart.bar")
+            }
         }
     }
 }

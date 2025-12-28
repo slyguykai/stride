@@ -1,6 +1,16 @@
 import Foundation
 
 extension DeferReason {
+    var emoji: String {
+        switch self {
+        case .blocked: return "🚫"
+        case .noEnergy: return "😴"
+        case .wrongTime: return "⏰"
+        case .unsure: return "🤔"
+        case .notImportant: return "🤷"
+        }
+    }
+
     var title: String {
         switch self {
         case .blocked: return "Blocked"

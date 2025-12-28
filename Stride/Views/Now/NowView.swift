@@ -5,68 +5,35 @@ struct NowView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: NowViewModel?
     @State private var showCapture = false
+    @State private var showSettings = false
+    @State private var showInsights = false
+    @State private var showCompletionCelebration = false
+    @State private var showCascadeBanner = false
 
     var body: some View {
-        Group {
-            if let viewModel, viewModel.tasks.isEmpty {
-                ContentUnavailableView(
-                    "No tasks yet",
-                    systemImage: "checkmark.circle",
-                    description: Text("Capture your first thought to get started.")
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel?.tasks ?? []) { task in
-                            SwipeableCard {
-                                TaskCard(task: task, size: viewModel?.cardSize(for: task) ?? .medium) {
-                                    viewModel?.selectedTask = task
-                                }
-                            } onSwipeRight: {
-                                await viewModel?.complete(task)
-                            } onSwipeLeft: {
-                                viewModel?.showDefer(task)
-                            }
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                        }
-                    }
-                    .padding()
-                }
-                .animation(.spring(), value: viewModel?.tasks.count ?? 0)
-            }
-        }
+        contentView
         .navigationTitle("Now")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showCapture = true
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                }
-                .accessibilityLabel("Capture")
-            }
-        }
+        .toolbar { toolbarContent }
         .sheet(isPresented: $showCapture) {
             NavigationStack {
                 CaptureView()
             }
         }
-        .sheet(isPresented: Binding(
-            get: { viewModel?.showDeferSheet ?? false },
-            set: { viewModel?.showDeferSheet = $0 }
-        )) {
-            if let task = viewModel?.taskToDefer {
-                DeferPlaceholderSheet(task: task) { reason in
-                    viewModel?.deferTask(task, reason: reason)
-                }
+        .sheet(isPresented: deferSheetBinding) { deferSheetContent }
+        .sheet(item: focusTimeBinding) { candidate in
+            FocusTimeView(candidate: candidate, modelContext: modelContext)
+        }
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                SettingsView()
             }
         }
-        .navigationDestination(item: Binding(
-            get: { viewModel?.selectedTask },
-            set: { viewModel?.selectedTask = $0 }
-        )) { task in
+        .sheet(isPresented: $showInsights) {
+            NavigationStack {
+                PatternInsightsView()
+            }
+        }
+        .navigationDestination(item: selectedTaskBinding) { task in
             TaskDetailView(task: task)
         }
         .task {
@@ -75,48 +42,153 @@ struct NowView: View {
                 viewModel = NowViewModel(modelContext: modelContext)
             }
             viewModel?.loadTasks()
+            RetrospectiveScheduler().scheduleWeekly()
+        }
+        .overlay {
+            if showCompletionCelebration, let title = viewModel?.lastCompletionTitle {
+                CompletionCelebrationView(title: title)
+                    .transition(.opacity.combined(with: .scale))
+            }
+        }
+        .onChange(of: viewModel?.lastCompletionTitle) { _, newValue in
+            guard newValue != nil else { return }
+            showCompletionCelebration = true
+            withAnimation(.spring()) {
+                showCascadeBanner = (viewModel?.cascadeCount ?? 0) > 0
+            }
+            _Concurrency.Task {
+                try? await _Concurrency.Task.sleep(for: .seconds(1.4))
+                withAnimation(.spring()) {
+                    showCompletionCelebration = false
+                    showCascadeBanner = false
+                }
+                viewModel?.lastCompletionTitle = nil
+                viewModel?.cascadeCount = nil
+            }
         }
     }
-}
 
-struct DeferPlaceholderSheet: View {
-    let task: Task
-    let onDefer: (DeferReason) -> Void
+    @ViewBuilder
+    private var contentView: some View {
+        if let viewModel, viewModel.tasks.isEmpty {
+            ContentUnavailableView(
+                "No tasks yet",
+                systemImage: "checkmark.circle",
+                description: Text("Capture your first thought to get started.")
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            taskListView
+        }
+    }
 
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                Text("Why are you deferring?")
-                    .font(.headline)
-
-                ForEach(DeferReason.allCases, id: \.self) { reason in
-                    Button {
-                        onDefer(reason)
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Text(reason.title)
-                            Spacer()
-                        }
-                        .padding()
-                        .background(Color.secondary.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                }
+    private var taskListView: some View {
+        ScrollView {
+            LazyVStack(spacing: 16) {
+                streakSummaryView
+                cascadeBannerView
+                tasksListView
+                aspirationalSectionView
             }
             .padding()
-            .navigationTitle("Defer Task")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+        }
+        .animation(.spring(), value: viewModel?.tasks.count ?? 0)
+    }
+
+    @ViewBuilder
+    private var streakSummaryView: some View {
+        if let streak = viewModel?.streakData {
+            StreakSummaryView(data: streak)
+        }
+    }
+
+    @ViewBuilder
+    private var cascadeBannerView: some View {
+        if let count = viewModel?.cascadeCount, count > 0, showCascadeBanner {
+            CascadeBannerView(count: count)
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    @ViewBuilder
+    private var tasksListView: some View {
+        ForEach(viewModel?.tasks ?? []) { task in
+            SwipeableCard {
+                TaskCard(task: task, size: viewModel?.cardSize(for: task) ?? .medium) {
+                    viewModel?.selectedTask = task
                 }
+            } onSwipeRight: {
+                await viewModel?.complete(task)
+            } onSwipeLeft: {
+                viewModel?.showDefer(task)
+            }
+            .transition(.move(edge: .trailing).combined(with: .opacity))
+        }
+    }
+
+    @ViewBuilder
+    private var aspirationalSectionView: some View {
+        if viewModel?.showAspirationalSection == true {
+            AspirationalSectionView(tasks: viewModel?.aspirationalTasks ?? []) { task in
+                viewModel?.selectedTask = task
             }
         }
-        .presentationDetents([.medium])
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Menu {
+                Button("Insights") {
+                    showInsights = true
+                }
+                Button("Settings") {
+                    showSettings = true
+                }
+            } label: {
+                Image(systemName: "slider.horizontal.3")
+            }
+            .accessibilityLabel("More")
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button {
+                showCapture = true
+            } label: {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+            }
+            .accessibilityLabel("Capture")
+        }
+    }
+
+    private var deferSheetBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.showDeferSheet ?? false },
+            set: { viewModel?.showDeferSheet = $0 }
+        )
+    }
+
+    private var selectedTaskBinding: Binding<Task?> {
+        Binding(
+            get: { viewModel?.selectedTask },
+            set: { viewModel?.selectedTask = $0 }
+        )
+    }
+
+    private var focusTimeBinding: Binding<FocusTimeCandidate?> {
+        Binding(
+            get: { viewModel?.focusTimeCandidate },
+            set: { viewModel?.focusTimeCandidate = $0 }
+        )
+    }
+
+    @ViewBuilder
+    private var deferSheetContent: some View {
+        if let task = viewModel?.taskToDefer {
+            DeferSheet(task: task) { reason, time in
+                await viewModel?.deferTask(task, reason: reason, until: time)
+            }
+        }
     }
 }
 

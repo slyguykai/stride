@@ -6,6 +6,8 @@ struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let task: Task
     @State private var viewModel: TaskDetailViewModel?
+    @State private var showRecurringEditor = false
+    @State private var showWaitingConfig = false
 
     init(task: Task) {
         self.task = task
@@ -17,6 +19,8 @@ struct TaskDetailView: View {
                 header
                 originalThought
                 subtasksSection
+                recurringSection
+                aspirationalSection
                 metadataSection
             }
             .padding()
@@ -29,7 +33,10 @@ struct TaskDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
-                    Button("Mark Waiting") { viewModel?.markWaiting() }
+                    Button("Mark Waiting") {
+                        showWaitingConfig = true
+                    }
+                    Button("Recurring Rule") { showRecurringEditor = true }
                     Button("Delete", role: .destructive) {
                         viewModel?.delete()
                         dismiss()
@@ -38,6 +45,12 @@ struct TaskDetailView: View {
                     Image(systemName: "ellipsis.circle")
                 }
             }
+        }
+        .sheet(isPresented: $showRecurringEditor) {
+            RecurringRuleEditorView(task: task)
+        }
+        .sheet(isPresented: $showWaitingConfig) {
+            WaitingConfigView(task: task)
         }
     }
 
@@ -93,10 +106,69 @@ struct TaskDetailView: View {
 
             LabeledContent("Created", value: task.createdAt.formatted(date: .abbreviated, time: .shortened))
             LabeledContent("Deferred", value: "\(task.deferCount) times")
+            if let deferUntil = task.deferUntil {
+                LabeledContent("Deferred until", value: deferUntil.formatted(date: .abbreviated, time: .shortened))
+            }
+            if task.status == .waiting {
+                LabeledContent("Waiting since", value: (task.waitingSince ?? task.createdAt).formatted(date: .abbreviated, time: .shortened))
+                if let contact = task.waitingContactName, !contact.isEmpty {
+                    LabeledContent("Waiting on", value: contact)
+                }
+                if let interval = task.waitingFollowUpIntervalDays {
+                    LabeledContent("Follow up every", value: "\(interval) days")
+                }
+            }
             LabeledContent("Status", value: task.status.rawValue.capitalized)
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
+    }
+
+    private var recurringSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Recurring")
+                    .font(.headline)
+                Spacer()
+                Button(task.recurringRule == nil ? "Add" : "Edit") {
+                    showRecurringEditor = true
+                }
+                .font(.subheadline)
+            }
+
+            if let rule = task.recurringRule {
+                RecurringWindowView(rule: rule)
+            } else {
+                Text("No recurring rule set.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var aspirationalSection: some View {
+        if task.taskType == .aspirational {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Aspirational notes")
+                    .font(.headline)
+                if let why = task.aspirationWhy, !why.isEmpty {
+                    Text("Why: \(why)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if let when = task.aspirationWhen, !when.isEmpty {
+                    Text("When: \(when)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if task.aspirationOnboardingComplete ?? false == false {
+                    Text("Answer the prompts in Aspirational to add context.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }
 

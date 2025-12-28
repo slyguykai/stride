@@ -443,12 +443,12 @@ func shouldSurfaceAspirational() -> Bool {
 - Celebrates when touched, doesn't nag when ignored
 
 ### 6.3 Deliverables
-- [ ] Waiting status UI and flow
-- [ ] Follow-up reminder system
-- [ ] Message template generation
-- [ ] Aspirational task section
-- [ ] Onboarding probes flow
-- [ ] Surplus detection algorithm
+- [x] Waiting status UI and flow
+- [x] Follow-up reminder system
+- [x] Message template generation
+- [x] Aspirational task section
+- [x] Onboarding probes flow
+- [x] Surplus detection algorithm
 
 ---
 
@@ -517,13 +517,13 @@ struct StreakData {
 - Shareable summary card (optional)
 
 ### 7.4 Deliverables
-- [ ] Completion animation system
-- [ ] Haptic feedback patterns
-- [ ] Sound design integration
-- [ ] Cascade visualization
-- [ ] Streak tracking UI
-- [ ] Weekly retrospective screen
-- [ ] Retrospective scheduling
+- [x] Completion animation system
+- [x] Haptic feedback patterns
+- [x] Sound design integration
+- [x] Cascade visualization
+- [x] Streak tracking UI
+- [x] Weekly retrospective screen
+- [x] Retrospective scheduling
 
 ---
 

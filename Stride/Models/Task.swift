@@ -12,6 +12,16 @@ final class Task: IdentifiedModel {
     var status: TaskStatus
     var taskType: TaskType
     var deferCount: Int
+    var deferUntil: Date?
+    var waitingContactName: String?
+    var waitingSince: Date?
+    var waitingFollowUpIntervalDays: Int?
+    var waitingFollowUpMessage: String?
+    var waitingFollowUpCount: Int?
+    var waitingLastFollowUpAt: Date?
+    var aspirationWhy: String?
+    var aspirationWhen: String?
+    var aspirationOnboardingComplete: Bool?
     var deadline: Date?
     var createdAt: Date
     var completedAt: Date?
@@ -20,6 +30,7 @@ final class Task: IdentifiedModel {
     var subtasks: [Subtask]
     var dependencies: [TaskDependency]
     var deferEvents: [DeferEvent]
+    var recurringRule: RecurringRule?
 
     init(
         id: UUID = UUID(),
@@ -31,13 +42,24 @@ final class Task: IdentifiedModel {
         status: TaskStatus,
         taskType: TaskType,
         deferCount: Int = 0,
+        deferUntil: Date? = nil,
+        waitingContactName: String? = nil,
+        waitingSince: Date? = nil,
+        waitingFollowUpIntervalDays: Int? = nil,
+        waitingFollowUpMessage: String? = nil,
+        waitingFollowUpCount: Int? = nil,
+        waitingLastFollowUpAt: Date? = nil,
+        aspirationWhy: String? = nil,
+        aspirationWhen: String? = nil,
+        aspirationOnboardingComplete: Bool? = nil,
         deadline: Date? = nil,
         createdAt: Date = Date(),
         completedAt: Date? = nil,
         contextTags: [String] = [],
         subtasks: [Subtask] = [],
         dependencies: [TaskDependency] = [],
-        deferEvents: [DeferEvent] = []
+        deferEvents: [DeferEvent] = [],
+        recurringRule: RecurringRule? = nil
     ) {
         self.id = id
         self.rawInput = rawInput
@@ -48,6 +70,16 @@ final class Task: IdentifiedModel {
         self.status = status
         self.taskType = taskType
         self.deferCount = deferCount
+        self.deferUntil = deferUntil
+        self.waitingContactName = waitingContactName
+        self.waitingSince = waitingSince
+        self.waitingFollowUpIntervalDays = waitingFollowUpIntervalDays
+        self.waitingFollowUpMessage = waitingFollowUpMessage
+        self.waitingFollowUpCount = waitingFollowUpCount
+        self.waitingLastFollowUpAt = waitingLastFollowUpAt
+        self.aspirationWhy = aspirationWhy
+        self.aspirationWhen = aspirationWhen
+        self.aspirationOnboardingComplete = aspirationOnboardingComplete
         self.deadline = deadline
         self.createdAt = createdAt
         self.completedAt = completedAt
@@ -55,6 +87,7 @@ final class Task: IdentifiedModel {
         self.subtasks = subtasks
         self.dependencies = dependencies
         self.deferEvents = deferEvents
+        self.recurringRule = recurringRule
     }
 
     var progress: Double {

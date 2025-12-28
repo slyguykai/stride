@@ -6,6 +6,7 @@ struct SwipeableCard<Content: View>: View {
     let onSwipeLeft: () -> Void
 
     @State private var offset: CGFloat = 0
+    @State private var didTriggerHaptic = false
     private let threshold: CGFloat = 100
 
     init(
@@ -46,17 +47,27 @@ struct SwipeableCard<Content: View>: View {
         DragGesture()
             .onChanged { value in
                 offset = value.translation.width
+                let passed = abs(value.translation.width) > threshold
+                if passed, !didTriggerHaptic {
+                    HapticEngine.shared.lightTap()
+                    didTriggerHaptic = true
+                } else if !passed {
+                    didTriggerHaptic = false
+                }
             }
             .onEnded { value in
                 if value.translation.width > threshold {
                     offset = UIScreen.main.bounds.width
+                    HapticEngine.shared.taskComplete()
                     _Concurrency.Task { await onSwipeRight() }
                 } else if value.translation.width < -threshold {
+                    HapticEngine.shared.mediumTap()
                     onSwipeLeft()
                     offset = 0
                 } else {
                     offset = 0
                 }
+                didTriggerHaptic = false
             }
     }
 }

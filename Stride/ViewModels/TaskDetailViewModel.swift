@@ -17,6 +17,8 @@ final class TaskDetailViewModel {
 
     func toggleSubtask(_ subtask: Subtask) async {
         subtask.isCompleted.toggle()
+        HapticEngine.shared.lightTap()
+        AudioManager.shared.play(.completeSoft)
         try? modelContext.save()
     }
 

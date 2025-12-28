@@ -2,6 +2,7 @@ import Foundation
 
 protocol AIServiceProtocol: Sendable {
     func parseTaskInput(_ input: String, context: TaskContext?) async throws -> ParsedTask
+    func microBreakdown(task: Task, blockReason: String) async throws -> MicroBreakdown
 }
 
 actor AIService: AIServiceProtocol {
@@ -19,6 +20,13 @@ actor AIService: AIServiceProtocol {
         let response = try await apiClient.complete(prompt: prompt)
         let data = Data(response.utf8)
         return try JSONDecoder().decode(ParsedTask.self, from: data)
+    }
+
+    func microBreakdown(task: Task, blockReason: String) async throws -> MicroBreakdown {
+        let prompt = PromptBuilder.microBreakdownPrompt(task: task, blockReason: blockReason)
+        let response = try await apiClient.complete(prompt: prompt)
+        let data = Data(response.utf8)
+        return try JSONDecoder().decode(MicroBreakdown.self, from: data)
     }
 }
 
@@ -114,6 +122,12 @@ struct OpenAIChatResponse: Codable {
     let choices: [Choice]
 }
 
+struct MicroBreakdown: Codable, Sendable {
+    let microSteps: [String]
+    let simplifiedVersion: String
+    let missingInfo: String
+}
+
 enum PromptBuilder {
     static func parsingPrompt(input: String, context: TaskContext?) -> String {
         var prompt = """
@@ -146,5 +160,29 @@ enum PromptBuilder {
         """
 
         return prompt
+    }
+
+    static func microBreakdownPrompt(task: Task, blockReason: String) -> String {
+        """
+        A user has deferred this task \(task.deferCount) times.
+
+        Task: "\(task.title)"
+        Original thought: "\(task.rawInput)"
+        They said they're blocked because: "\(blockReason)"
+
+        Help them get unstuck by finding the smallest first step.
+
+        Return JSON:
+        {
+            "microSteps": [
+                "Tiny first action (<2 min)",
+                "Next tiny action"
+            ],
+            "simplifiedVersion": "Simpler version that still provides value",
+            "missingInfo": "Info they may need to gather first, if any"
+        }
+
+        Return only JSON, no explanation.
+        """
     }
 }

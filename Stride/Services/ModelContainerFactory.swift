@@ -7,7 +7,8 @@ enum ModelContainerFactory {
             Subtask.self,
             TaskDependency.self,
             DeferEvent.self,
-            UserPattern.self
+            UserPattern.self,
+            RecurringRule.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         return try ModelContainer(for: schema, configurations: [configuration])

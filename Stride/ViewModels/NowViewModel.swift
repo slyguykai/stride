@@ -8,15 +8,28 @@ import UIKit
 @MainActor
 final class NowViewModel {
     private let modelContext: ModelContext
+    private let notificationScheduler: NotificationSchedulerProtocol
+    private let streakTracker = StreakTracker()
+    private let aspirationalSurfacing = AspirationalSurfacingService()
 
     private(set) var tasks: [Task] = []
     private(set) var isLoading = false
     var selectedTask: Task?
     var showDeferSheet = false
     var taskToDefer: Task?
+    var focusTimeCandidate: FocusTimeCandidate?
+    var streakData: StreakData?
+    var lastCompletionTitle: String?
+    var cascadeCount: Int?
+    var showAspirationalSection = false
+    var aspirationalTasks: [Task] = []
 
-    init(modelContext: ModelContext) {
+    init(
+        modelContext: ModelContext,
+        notificationScheduler: NotificationSchedulerProtocol = NotificationScheduler()
+    ) {
         self.modelContext = modelContext
+        self.notificationScheduler = notificationScheduler
     }
 
     func loadTasks() {
@@ -28,7 +41,14 @@ final class NowViewModel {
                 sortBy: [SortDescriptor(\Task.createdAt, order: .reverse)]
             )
             let allTasks = try modelContext.fetch(descriptor)
-            tasks = rankTasks(allTasks.filter { $0.status == .active })
+            let reactivated = reactivateDeferredTasks(allTasks)
+            let waitingDue = reactivated.filter { isWaitingFollowUpDue($0) }
+            let activeTasks = reactivated.filter { $0.status == .active }
+            tasks = rankTasks(activeTasks + waitingDue)
+            focusTimeCandidate = evaluateFocusTimeCandidate(from: reactivated)
+            streakData = streakTracker.currentData()
+            showAspirationalSection = aspirationalSurfacing.shouldSurfaceAspirational(tasks: reactivated)
+            aspirationalTasks = reactivated.filter { $0.taskType == .aspirational }
         } catch {
             tasks = []
         }
@@ -39,6 +59,10 @@ final class NowViewModel {
         task.completedAt = Date()
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
+        AudioManager.shared.play(.completeMajor)
+        lastCompletionTitle = task.title
+        cascadeCount = updateCascade(for: task)
+        streakData = streakTracker.recordCompletion(on: task.completedAt ?? Date())
         try? modelContext.save()
         loadTasks()
     }
@@ -48,13 +72,22 @@ final class NowViewModel {
         showDeferSheet = true
     }
 
-    func deferTask(_ task: Task, reason: DeferReason) {
+    func deferTask(_ task: Task, reason: DeferReason, until: Date?) async {
         task.status = .deferred
         task.deferCount += 1
-        let event = DeferEvent(reason: reason, task: task)
+        task.deferUntil = until
+        let event = DeferEvent(reason: reason, proposedTime: until, task: task)
         task.deferEvents.append(event)
         modelContext.insert(event)
         try? modelContext.save()
+        if let until {
+            let preferences = NotificationPreferencesStore.load()
+            await notificationScheduler.scheduleDeferredReminder(
+                for: task,
+                at: until,
+                preferences: preferences
+            )
+        }
         showDeferSheet = false
         taskToDefer = nil
         loadTasks()
@@ -103,7 +136,7 @@ final class NowViewModel {
         score -= Float(task.deferCount) * 5
 
         if task.status == .waiting {
-            return -1000
+            return isWaitingFollowUpDue(task) ? 30 : -1000
         }
 
         return score
@@ -122,5 +155,76 @@ final class NowViewModel {
 
     private func currentEnergyLevel() -> EnergyLevel {
         .medium
+    }
+
+    private func isWaitingFollowUpDue(_ task: Task) -> Bool {
+        guard task.status == .waiting else { return false }
+        let dueDate = waitingFollowUpDate(for: task)
+        return dueDate.map { $0 <= Date() } ?? false
+    }
+
+    private func waitingFollowUpDate(for task: Task) -> Date? {
+        let intervalDays = task.waitingFollowUpIntervalDays ?? 0
+        guard intervalDays > 0 else { return nil }
+        let base = task.waitingLastFollowUpAt ?? task.waitingSince
+        guard let base else { return nil }
+        return Calendar.current.date(byAdding: .day, value: intervalDays, to: base)
+    }
+
+    private func reactivateDeferredTasks(_ tasks: [Task]) -> [Task] {
+        let now = Date()
+        var updated = tasks
+        for task in updated where task.status == .deferred {
+            if let until = task.deferUntil, until <= now {
+                task.status = .active
+                task.deferUntil = nil
+            }
+        }
+        try? modelContext.save()
+        return updated
+    }
+
+    private func updateCascade(for completed: Task) -> Int {
+        let completedId = completed.id
+        let dependencyDescriptor = FetchDescriptor<TaskDependency>(
+            predicate: #Predicate { $0.blocker.id == completedId }
+        )
+        let dependencies = (try? modelContext.fetch(dependencyDescriptor)) ?? []
+        var newlyUnblocked: [Task] = []
+
+        for dependency in dependencies {
+            let blocked = dependency.blocked
+            let allDependencies = blocked.dependencies
+            let stillBlocked = allDependencies.contains { $0.blocker.status != .completed }
+            if !stillBlocked && blocked.status == .waiting {
+                blocked.status = .active
+                newlyUnblocked.append(blocked)
+            }
+        }
+
+        if !newlyUnblocked.isEmpty {
+            try? modelContext.save()
+        }
+        return newlyUnblocked.count
+    }
+
+    private func evaluateFocusTimeCandidate(from tasks: [Task]) -> FocusTimeCandidate? {
+        if let deferred = tasks.first(where: { $0.deferCount >= 5 }) {
+            return FocusTimeCandidate(task: deferred, trigger: .deferredStreak)
+        }
+
+        let staleThreshold = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        if let stale = tasks.first(where: { $0.status == .active && $0.createdAt < staleThreshold }) {
+            return FocusTimeCandidate(task: stale, trigger: .staleTask)
+        }
+
+        let dependencies = tasks.flatMap(\.dependencies)
+        if let blocking = tasks.first(where: { task in
+            dependencies.filter { $0.blocker.id == task.id }.count >= 2
+        }) {
+            return FocusTimeCandidate(task: blocking, trigger: .blockingOthers)
+        }
+
+        return nil
     }
 }
