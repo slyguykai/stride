@@ -7,7 +7,8 @@ This README is intentionally lightweight. It will be updated as architecture, fe
 
 ## Getting started
 1. Clone the repository.
-2. Follow setup instructions for the components added to this codebase (to be documented).
+2. Create `Secrets.xcconfig` (copy `Secrets.xcconfig.example`) and set `OPENAI_API_KEY` locally.
+3. Open `Stride.xcodeproj` and build.
 
 ## Contributing
 Contributions are welcome. Please open an issue to discuss changes before submitting a pull request.
